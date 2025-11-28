@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Column Crusher by MHT</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+      transition: background-color 0.3s, color 0.3s;
+      background-color: #fdfdfd;
+    }
+    body.dark-mode {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+    }
+    h2 {
+      text-align: center;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-size: 16px;
+      background-color: #fff;
+      color: #000;
+    }
+    body.dark-mode textarea {
+      background-color: #333;
+      color: #fff;
+    }
+    select {
+      padding: 10px;
+      font-size: 16px;
+      margin: 5px;
+    }
+    .output {
+      margin-top: 15px;
+      white-space: pre-wrap;
+      background: #f4f4f4;
+      padding: 10px;
+      min-height: 80px;
+      max-height: 300px;
+      overflow-y: auto;
+      word-wrap: break-word;
+    }
+    body.dark-mode .output {
+      background: #2b2b2b;
+      color: #fff;
+    }
+    .ad {
+      margin: 20px 0;
+      padding: 10px;
+      text-align: center;
+      background: #e8e8e8;
+      border: 1px dashed #aaa;
+      color: #555;
+      font-size: 14px;
+    }
+    body.dark-mode .ad {
+      background: #444;
+      color: #ccc;
+      border-color: #666;
+    }
+    #counter {
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    #rowCount {
+      font-weight: bold;
+      margin-left: 20px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .toggle-container {
+      margin-left: auto;
+    }
+    .memory-buttons {
+      margin-top: 15px;
+    }
+    button {
+      padding: 8px 12px;
+      margin: 5px 5px 10px 0;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Column Crusher by MHT</h2>
+
+  <div class="ad">
+    �� [Ad Space – Top Banner] ��<br>
+    Put your leaderboard or banner ad here.
+  </div>
+
+  <textarea id="input" placeholder="Paste your column data here..."></textarea>
+  <button onclick="clearInput()">�� Clear Input</button>
+
+  <div class="controls">
+    <select id="format">
+      <option value="comma">Comma (no space)</option>
+      <option value="semicolon">Semicolon + space</option>
+    </select>
+
+    <span id="counter">Converted: 0</span>
+    <span id="rowCount">Rows: 0</span>
+
+    <div class="toggle-container">
+      <label>
+        <input type="checkbox" id="modeToggle" onchange="toggleMode()"> �� Dark Mode
+      </label>
+    </div>
+  </div>
+
+  <div class="memory-buttons">
+    <button id="saveMemoryBtn">�� Save to Memory</button>
+    <button id="loadMemoryBtn">�� Load Memory</button>
+  </div>
+
+  <div class="ad">�� [Ad Space – Mid Section] ��<br>Perfect for square ads or affiliate links!</div>
+
+  <div class="output" id="output"></div>
+
+  <div class="ad">�� [Ad Space – Bottom Footer] ��<br>Try a sticky footer ad or promote your tools!</div>
+
+  <script>
+    let convertCount = localStorage.getItem('convertCount') ? parseInt(localStorage.getItem('convertCount')) : 0;
+
+    const inputField = document.getElementById("input");
+    const outputField = document.getElementById("output");
+    const formatField = document.getElementById("format");
+    const counter = document.getElementById("counter");
+    const rowCounter = document.getElementById("rowCount");
+    const saveMemoryBtn = document.getElementById("saveMemoryBtn");
+    const loadMemoryBtn = document.getElementById("loadMemoryBtn");
+
+    counter.textContent = "Converted: " + convertCount;
+
+    if (localStorage.getItem('savedMemory')) {
+      loadMemoryBtn.disabled = false;
+    } else {
+      loadMemoryBtn.disabled = true;
+    }
+
+    let previousOutput = "";
+
+    inputField.addEventListener("input", () => {
+      updateOutput();
+      updateRowCount();
+    });
+
+    inputField.addEventListener("keydown", (e) => {
+      if (
+        e.key.length === 1 && // Printable character
+        !e.ctrlKey && !e.metaKey && !e.altKey
+      ) {
+        setTimeout(() => {
+          copyIfChanged();
+        }, 0);
+      }
+    });
+
+    inputField.addEventListener("paste", () => {
+      setTimeout(() => {
+        updateOutput();
+        copyIfChanged();
+        updateRowCount();
+      }, 10);
+    });
+
+    formatField.addEventListener("change", () => {
+      updateOutput();
+      updateRowCount();
+    });
+
+    function getConvertedText() {
+      const input = inputField.value.trim();
+      const format = formatField.value;
+      const separator = format === "semicolon" ? "; " : ",";
+
+      return input
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line !== "")
+        .join(separator);
+    }
+
+    function updateOutput() {
+      const result = getConvertedText();
+      outputField.textContent = result;
+    }
+
+    function updateRowCount() {
+      const lines = inputField.value.split(/\r?\n/).filter(line => line.trim() !== "");
+      rowCounter.textContent = "Rows: " + lines.length;
+    }
+
+    function copyIfChanged() {
+      const result = getConvertedText();
+      if (result.length > 0 && result !== previousOutput) {
+        previousOutput = result;
+        navigator.clipboard.writeText(result).then(() => {
+          convertCount++;
+          counter.textContent = "Converted: " + convertCount;
+          localStorage.setItem('convertCount', convertCount);
+        }).catch(err => {
+          console.error("Clipboard copy failed:", err);
+        });
+      }
+    }
+
+    saveMemoryBtn.addEventListener("click", () => {
+      const currentInput = inputField.value.trim();
+      if (currentInput.length > 0) {
+        localStorage.setItem('savedMemory', currentInput);
+        loadMemoryBtn.disabled = false;
+        alert("Saved to memory!");
+      } else {
+        alert("Please enter some text before saving to memory.");
+      }
+    });
+
+    loadMemoryBtn.addEventListener("click", () => {
+      const savedMemory = localStorage.getItem('savedMemory');
+      if (savedMemory) {
+        inputField.value = savedMemory;
+        updateOutput();
+        updateRowCount();
+      }
+    });
+
+    function toggleMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    function clearInput() {
+      inputField.value = "";
+      outputField.textContent = "";
+      rowCounter.textContent = "Rows: 0";
+      previousOutput = "";
+    }
+  </script>
+
+</body>
+</html>
